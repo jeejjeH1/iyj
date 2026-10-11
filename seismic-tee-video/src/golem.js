@@ -5,35 +5,52 @@ import { rng } from './util.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
-// Chest emblem: two nested sets of tapered crescents crossing in an X.
-// Coordinates are in a ~490px wide design space centred on (0,0).
-export function drawEmblem(ctx, cx, cy, scale, fill = '#fff', outline = '#141110') {
-  const groups = [
-    { dir: 1, cy: 45, arcs: [[165, -152, 116, 14], [128, -160, 108, 16], [88, -140, 98, 30]] },
-    { dir: -1, cy: -45, arcs: [[165, -152, 116, 14], [128, -160, 108, 16], [88, -140, 98, 30]] },
-  ];
-  const stroke = (g, [R, ox, span, th], pad) => {
-    const ccx = g.dir * ox, ccy = g.cy;
-    const N = 48, outer = [], inner = [];
-    for (let i = 0; i <= N; i++) {
-      const u = i / N;
-      const a = ((-span + 2 * span * u) * Math.PI) / 180;
-      const w = (th * Math.pow(Math.sin(Math.PI * u), 0.75) + 1.5) / 2 + pad;
-      const dx = Math.cos(a) * g.dir, dy = Math.sin(a);
-      outer.push([ccx + dx * (R + w), ccy + dy * (R + w)]);
-      inner.push([ccx + dx * (R - w), ccy + dy * (R - w)]);
+// Chest emblem, traced from emblem_ref.png: three nested rounded strokes per side,
+// mirrored left/right, the outer pair meeting in a cusp top and bottom.
+// Design space is the 350px reference centred on (0,0); `scale` keeps the old
+// convention of ~490 units across.
+export function drawEmblem(ctx, cx, cy, scale, fill = '#fff', outline = null) {
+  const k = scale * (490 / 227);
+  const paths = (sx) => {
+    const X = (x) => cx + sx * x * k, Y = (y) => cy + y * k;
+    const out = [];
+    for (const sy of [-1, 1]) {
+      // outer wing: straight lead-in, then an arc that meets the centre line
+      const p = [];
+      p.push([X(-107), Y(sy * -95)]);
+      const c = [-74, 18], R = 113, end = Math.asin(74 / R);
+      for (let i = 0; i <= 24; i++) {
+        const th = (end * i) / 24;
+        p.push([X(c[0] + R * Math.sin(th)), Y(sy * (c[1] - R * Math.cos(th)))]);
+      }
+      out.push(p);
     }
-    ctx.beginPath();
-    outer.forEach(([x, y], i) => (i ? ctx.lineTo(cx + x * scale, cy + y * scale) : ctx.moveTo(cx + x * scale, cy + y * scale)));
-    inner.reverse().forEach(([x, y]) => ctx.lineTo(cx + x * scale, cy + y * scale));
-    ctx.closePath();
+    // middle "D" and inner crescent
+    for (const [x0, xc, R] of [[-82, -60, 61.5], [-69, -69, 30]]) {
+      const p = [[X(x0), Y(-R)]];
+      for (let i = 0; i <= 32; i++) {
+        const th = -Math.PI / 2 + (Math.PI * i) / 32;
+        p.push([X(xc + R * Math.cos(th)), Y(R * Math.sin(th))]);
+      }
+      p.push([X(x0), Y(R)]);
+      out.push(p);
+    }
+    return out;
   };
-  for (const g of groups) {
-    for (const arc of g.arcs) {
-      if (outline) { ctx.fillStyle = outline; stroke(g, arc, 7); ctx.fill(); }
-      ctx.fillStyle = fill; stroke(g, arc, 0); ctx.fill();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const all = [...paths(1), ...paths(-1)];
+  const stroke = (w, col) => {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = w;
+    for (const p of all) {
+      ctx.beginPath();
+      p.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.stroke();
     }
-  }
+  };
+  if (outline) stroke(13 * k + 8, outline);
+  stroke(13 * k, fill);
 }
 
 export function emblemTexture(size = 512) {
