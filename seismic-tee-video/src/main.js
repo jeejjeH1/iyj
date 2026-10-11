@@ -317,18 +317,10 @@ const coinList = [];
 // ---------------------------------------------------------------- overlay: HUD
 const hud = el('div', '', '', {}, ov);
 hud.id = 'hud';
-const corners = [[44, 44, 'top', 'left'], [44, 44, 'top', 'right'], [44, 44, 'bottom', 'left'], [44, 44, 'bottom', 'right']];
-for (const [a, b, v, h] of corners) {
-  const c = el('div', 'corner', '', { [v]: a + 'px', [h]: b + 'px', ['border' + v[0].toUpperCase() + v.slice(1) + 'Width']: '1.5px', ['border' + h[0].toUpperCase() + h.slice(1) + 'Width']: '1.5px' }, hud);
-}
 const hudTL = el('div', 'hud-t', `<span style="display:inline-block;vertical-align:middle;margin-right:12px;transform:translateY(-2px)">${logoSVG(30)}</span>SEISMIC <span style="opacity:.45">/ TEE EXPLAINED</span>`, { left: '86px', top: '66px' }, hud);
 const hudTR = el('div', 'hud-t', '', { right: '86px', top: '74px', textAlign: 'right' }, hud);
 const hudTC = el('div', 'hud-t', '', { left: '86px', bottom: '62px', fontSize: '13px' }, hud);
 const hudBR = el('div', 'hud-t', 'CONFIDENTIAL · EVM-COMPATIBLE', { right: '86px', bottom: '62px', fontSize: '13px' }, hud);
-const prog = el('div', '', '<i></i>', {}, hud);
-prog.id = 'prog';
-for (const c of CUTS.slice(1, -2)) el('s', '', '', { left: (c / DURATION) * 100 + '%' }, prog);
-const progBar = prog.querySelector('i');
 const SECTION = ['', 'THE PROBLEM', "SEISMIC'S APPROACH", 'WHAT IS A TEE', '01 · TRANSACTION DATA', '02 · EXECUTION', '03 · OPERATORS', '04 · FINANCE', 'LIMITATIONS', 'THE BIGGER PICTURE', 'OUTRO', ''];
 
 const flare = el('div', 'flare', '', { top: '540px', opacity: 0 }, ov);
@@ -957,7 +949,6 @@ export function renderAt(t) {
   // HUD
   const hudVis = env(t, T1, T11, 0.6, 0.6);
   hud.style.opacity = hudVis.toFixed(3);
-  progBar.style.width = ((t / DURATION) * 100).toFixed(2) + '%';
   hudTC.textContent = fmt(t) + '   ·   ' + String(si).padStart(2, '0') + ' / 10';
   if (si !== lastSection) lastSection = si;
   morphText(hudTR, '', SECTION[si] || '', t, CUTS[si] + 0.1, 0.6, 9);
