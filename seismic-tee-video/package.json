@@ -1,0 +1,16 @@
+{
+  "name": "seismic-tee-video",
+  "version": "1.0.0",
+  "description": "Seismic TEE explainer motion graphic",
+  "main": "index.js",
+  "scripts": {
+    "stills": "node render.js stills",
+    "audio": "python3 audio.py work/soundtrack.wav"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.169.0"
+  }
+}

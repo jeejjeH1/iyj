@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Seismic TEE Explainer</title>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+<style>
+  @font-face { font-family: 'JBM'; src: url('fonts/JetBrainsMono.woff2') format('woff2'); font-weight: 100 800; }
+  @font-face { font-family: 'SG'; src: url('fonts/SpaceGrotesk.woff2') format('woff2'); font-weight: 300 700; }
+  @font-face { font-family: 'IDisp'; src: url('fonts/InterDisplay-Bold.otf'); font-weight: 700; }
+  @font-face { font-family: 'IDisp'; src: url('fonts/InterDisplay-ExtraBold.otf'); font-weight: 800; }
+  @font-face { font-family: 'IDisp'; src: url('fonts/InterDisplay-Black.otf'); font-weight: 900; }
+  @font-face { font-family: 'IDisp'; src: url('fonts/InterDisplay-SemiBold.otf'); font-weight: 600; }
+  @font-face { font-family: 'IDisp'; src: url('fonts/InterDisplay-Medium.otf'); font-weight: 500; }
+  @font-face { font-family: 'IDisp'; src: url('fonts/InterDisplay-Regular.otf'); font-weight: 400; }
+  @font-face { font-family: 'IDisp'; src: url('fonts/InterDisplay-Light.otf'); font-weight: 300; }
+  :root {
+    --bg: #0d0a08; --ink: #16110d; --brown: #5a4334; --light: #a8835f; --tan: #c9a882; --cream: #efe2cc; --white: #ffffff;
+  }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  canvas { position: absolute; inset: 0; display: block; }
+  #ov { position: absolute; inset: 0; pointer-events: none; color: var(--cream); font-family: 'IDisp', 'Inter Display', 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased; }
+  #ov * { box-sizing: border-box; }
+  .tx { position: absolute; white-space: normal; }
+  .tx .w { display: inline-block; white-space: nowrap; }
+  .tx .c { display: inline-block; will-change: transform, opacity, filter; }
+  .acc { color: var(--tan); }
+  .hi { color: var(--white); }
+  .scr { color: var(--light); }
+
+  .kicker { font-family: 'JBM', monospace; font-weight: 500; font-size: 19px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--light); }
+  .kicker::before { content: ''; display: inline-block; width: 34px; height: 1.5px; background: var(--light); vertical-align: middle; margin-right: 16px; transform: translateY(-2px); }
+  .h1 { font-weight: 800; font-size: 92px; line-height: 0.98; letter-spacing: -0.035em; }
+  .h2 { font-weight: 700; font-size: 70px; line-height: 1.02; letter-spacing: -0.03em; }
+  .h3 { font-weight: 600; font-size: 50px; line-height: 1.1; letter-spacing: -0.02em; }
+  .body { font-weight: 400; font-size: 32px; line-height: 1.38; color: rgba(239, 226, 204, 0.82); letter-spacing: -0.005em; }
+  .mono { font-family: 'JBM', monospace; }
+  .num { font-weight: 900; font-size: 250px; line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 2px rgba(201, 168, 130, 0.55); }
+
+  .chip { position: absolute; font-family: 'JBM', monospace; font-size: 21px; font-weight: 500; letter-spacing: 0.04em; color: var(--cream);
+          padding: 13px 22px 13px 18px; border: 1.5px solid rgba(201, 168, 130, 0.55); border-radius: 999px; background: rgba(22, 17, 13, 0.7); white-space: nowrap; }
+  .chip i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--tan); margin-right: 12px; box-shadow: 0 0 12px var(--tan); transform: translateY(-1px); }
+
+  .card { position: absolute; background: rgba(18, 14, 11, 0.82); border: 1.5px solid rgba(239, 226, 204, 0.16); border-radius: 18px; }
+  .card .bar { height: 3px; background: linear-gradient(90deg, var(--tan), rgba(201,168,130,0)); border-radius: 18px 18px 0 0; }
+  .label { position: absolute; font-family: 'JBM', monospace; font-size: 17px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream); white-space: nowrap; }
+  .label .dot { display: inline-block; width: 8px; height: 8px; background: var(--cream); border-radius: 50%; margin-right: 10px; box-shadow: 0 0 10px var(--cream); transform: translateY(-1px); }
+  .datacard { position: absolute; font-family: 'JBM', monospace; font-size: 17px; line-height: 1.55; color: var(--cream); background: rgba(18,14,11,0.78);
+              border: 1px solid rgba(239,226,204,0.28); border-left: 3px solid var(--tan); padding: 10px 16px; white-space: nowrap; transform-origin: 0 100%; }
+  .datacard b { color: var(--light); font-weight: 500; margin-right: 10px; }
+
+  /* HUD */
+  #hud { position: absolute; inset: 0; }
+  .corner { position: absolute; width: 28px; height: 28px; border-color: rgba(239,226,204,0.4); border-style: solid; border-width: 0; }
+  .hud-t { position: absolute; font-family: 'JBM', monospace; font-size: 15px; letter-spacing: 0.24em; color: rgba(239,226,204,0.62); text-transform: uppercase; white-space: nowrap; }
+  #prog { position: absolute; left: 64px; right: 64px; bottom: 44px; height: 2px; background: rgba(239,226,204,0.12); }
+  #prog i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--tan); box-shadow: 0 0 10px var(--tan); }
+  #prog s { position: absolute; top: -4px; width: 1px; height: 10px; background: rgba(239,226,204,0.35); }
+
+  .flare { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, rgba(255,240,220,0), rgba(255,244,230,0.95) 50%, rgba(255,240,220,0)); filter: blur(1px); }
+  .code { position: absolute; font-family: 'JBM', monospace; font-size: 25px; line-height: 1.62; color: rgba(239,226,204,0.85); white-space: pre; }
+  .code .k { color: var(--light); }
+  .code .s { color: #fff; font-weight: 700; background: rgba(201,168,130,0.16); border-bottom: 2px solid var(--tan); padding: 0 4px; }
+  .code .cm { color: rgba(168,131,95,0.85); }
+  .warn { position: absolute; font-family: 'IDisp'; font-weight: 600; font-size: 38px; color: var(--cream); white-space: nowrap; }
+  .warn em { font-style: normal; font-family: 'JBM', monospace; font-size: 18px; color: var(--light); letter-spacing: 0.2em; margin-right: 18px; display: inline-block; width: 128px; }
+  .badge { position: absolute; font-family: 'JBM', monospace; font-size: 15px; font-weight: 600; letter-spacing: 0.14em; padding: 7px 12px; border-radius: 6px; white-space: nowrap; }
+  .badge.ok { color: #16110d; background: var(--cream); box-shadow: 0 0 22px rgba(239,226,204,0.45); }
+  .badge.bad { color: var(--cream); background: rgba(18,14,11,0.85); border: 1.5px dashed rgba(239,226,204,0.6); }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<div id="ov"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
